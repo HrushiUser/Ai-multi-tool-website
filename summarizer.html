@@ -6,8 +6,8 @@
   <title>Text Summarizer</title>
   <style>
     body {
-      background-color: #142850;  /* a solid navy blue */
-      color: #dbe9ff;             /* light text */
+      background-color: #142850;  
+      color: #dbe9ff;             
       font-family: Arial, sans-serif;
       padding: 40px;
     }
@@ -17,9 +17,9 @@
       margin-bottom: 20px;
       padding: 10px;
       font-size: 1rem;
-      background-color: #000000;  /* black textbox */
+      background-color: #000000;  
       color: #dbe9ff;
-      border: 2px solid #1e90ff; /* bright blue border */
+      border: 2px solid #1e90ff; 
       border-radius: 6px;
       resize: vertical;
       font-family: inherit;
@@ -27,7 +27,7 @@
     button {
       padding: 10px 20px;
       font-size: 1rem;
-      background: #1e90ff;        /* bright blue button */
+      background: #1e90ff;        
       color: white;
       border: none;
       cursor: pointer;
@@ -40,7 +40,7 @@
     .output {
       margin-top: 20px;
       padding: 20px;
-      background: #1c86ee;        /* softer blue */
+      background: #1c86ee;        
       border-radius: 10px;
       color: white;
       min-height: 80px;
@@ -65,24 +65,20 @@
     <button type="submit">Summarize</button>
   </form>
   <div class="output" id="summaryOutput"></div>
-
   <script>
     document.getElementById("summarizer-form").addEventListener("submit", async function (e) {
       e.preventDefault();
       const text = document.getElementById("inputText").value.trim();
       const output = document.getElementById("summaryOutput");
       const button = this.querySelector("button");
-
       if (!text) {
         output.textContent = "Please enter text to summarize.";
         output.className = "output error";
         return;
       }
-
       output.textContent = "Summarizing...";
       output.className = "output";
       button.disabled = true;
-
       try {
         const response = await fetch("https://api-inference.huggingface.co/models/facebook/bart-large-cnn", {
           method: "POST",
@@ -93,23 +89,20 @@
           body: JSON.stringify({
             inputs: text,
             parameters: {
-              max_length: 250,  // longer summary length
+              max_length: 250,  
               min_length: 150,
               do_sample: false,
               early_stopping: true
             }
           })
         });
-
         if (!response.ok) {
           throw new Error(`API error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
-
         if (data.error) {
           throw new Error("API error: " + data.error);
         }
-
         const summary = data[0]?.summary_text || "No summary generated.";
         output.textContent = summary;
       } catch (error) {
