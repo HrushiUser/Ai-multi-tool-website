@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Notes with History Toggle</title>
+  <style>
+    body {
+      background: #d0e2ff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      color: #333;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .container {
+      width: 80%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    textarea {
+      width: 100%;
+      height: 350px;
+      background: black;
+      color: white;
+      font-size: 1.1rem;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      border-radius: 5px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: fit-content;
+    }
+    p {
+      margin-top: 20px;
+      font-size: 1rem;
+    }
+
+    /* History sidebar styles */
+    .history-sidebar {
+      width: 20%;
+      background: #f0f4ff;
+      border-radius: 8px 0 0 8px;
+      padding: 15px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+      transform: translateX(100%);
+      position: relative;
+      z-index: 10;
+    }
+    .history-sidebar.visible {
+      transform: translateX(0);
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .history-header h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #333;
+    }
+    .clear-btn {
+      background: #d9534f;
+      border: none;
+      padding: 5px 10px;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: calc(100vh - 120px);
+    }
+    .history-item {
+      background: white;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.1);
+      font-size: 0.9rem;
+      color: #444;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .timestamp {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    /* History toggle button */
+    #toggleHistoryBtn {
+      background: #4a90e2;
+      border: none;
+      padding: 5px 15px;
+      color: white;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>
+      My Notes
+      <button id="toggleHistoryBtn">History</button>
+    </h2>
+    <textarea id="noteArea" placeholder="Write your notes here..."></textarea>
+    <button onclick="saveNote()">Save</button>
+    <p>Saved note: <span id="savedNote"></span></p>
+  </div>
+
+  <div class="history-sidebar" id="historySidebar">
+    <div class="history-header">
+      <h3>History</h3>
+      <button class="clear-btn" onclick="clearHistory()">Clear</button>
+    </div>
+    <div id="historyList" class="history-list"></div>
+  </div>
+
+  <script>
+    const noteArea = document.getElementById('noteArea');
+    const savedNote = document.getElementById('savedNote');
+    const historyList = document.getElementById('historyList');
+    const historySidebar = document.getElementById('historySidebar');
+    const toggleHistoryBtn = document.getElementById('toggleHistoryBtn');
+
+    toggleHistoryBtn.onclick = () => {
+      historySidebar.classList.toggle('visible');
+    };
+
+    function saveNote() {
+      const note = noteArea.value.trim();
+      if (!note) return alert('Please write a note before saving.');
+
+      localStorage.setItem('note', note);
+      savedNote.textContent = note;
+
+      let history = JSON.parse(localStorage.getItem('noteHistory') || '[]');
+      history.unshift({ text: note, time: new Date().toLocaleString() });
+      localStorage.setItem('noteHistory', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      let history = JSON.parse(localStorage.getItem('noteHistory') || '[]');
+      if (!history.length) {
+        historyList.innerHTML = '<p>No history yet.</p>';
+        return;
+      }
+      historyList.innerHTML = history.map(item => `
+        <div class="history-item">
+          <div class="timestamp">${item.time}</div>
+          ${escapeHtml(item.text)}
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('Clear entire history?')) {
+        localStorage.removeItem('noteHistory');
+        renderHistory();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    window.onload = () => {
+      const saved = localStorage.getItem('note') || '';
+      noteArea.value = saved;
+      savedNote.textContent = saved;
+      renderHistory();
+    };
+  </script>
+</body>
+</html>
+

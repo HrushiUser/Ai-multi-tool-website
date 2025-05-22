@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🎨 AI Image Generator (ClipDrop)</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 50px 15px;
+    font-family: 'Poppins', sans-serif;
+    background: #1a1a2e;
+    color: #cdd6f4; /* lighter text */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    color: #3ea6ff; /* lighter blue */
+    user-select: none;
+  }
+  form {
+    background: #121629; /* very dark, almost black-blue */
+    max-width: 580px;
+    width: 100%;
+    padding: 28px 32px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    user-select: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    background-color: #000000;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+  }
+  input[type="text"]::placeholder {
+    color: #888;
+    font-weight: 500;
+  }
+  label {
+    color: #3ea6ff;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  select {
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #121629;
+    background: #3ea6ff;
+    cursor: pointer;
+  }
+  select:focus {
+    outline: none;
+    background: #2b8de0;
+    color: #e0e0e0;
+  }
+  button {
+    margin-top: 8px;
+    background: #3ea6ff;
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    padding: 14px 0;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #297fcc;
+  }
+  #result {
+    margin-top: 40px;
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    justify-items: center;
+    min-height: 320px;
+    padding: 20px 24px;
+    border-radius: 16px;
+    background: #222244; /* dark slate blue */
+    user-select: none;
+  }
+  #result.four {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  #result.not-four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  #result img {
+    max-width: 100%;
+    max-height: 460px;
+    border-radius: 16px;
+    background: white;
+    padding: 8px;
+    object-fit: contain;
+    user-select: none;
+  }
+  .loader {
+    border: 6px solid #34568B33;
+    border-top: 6px solid #3ea6ff;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    animation: spin 1s linear infinite;
+    margin: 120px auto;
+    grid-column: 1 / -1;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+  .error {
+    color: #ff5555;
+    font-weight: 700;
+    font-size: 1.3rem;
+    user-select: none;
+    grid-column: 1 / -1;
+    text-align: center;
+    margin: 90px 0;
+  }
+  @media (min-width: 600px) {
+    #result {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 900px) {
+    #result.four {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    #result.not-four {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>🎨 AI Image Generator</h1>
+
+  <form id="imageForm" autocomplete="off">
+    <input
+      type="text"
+      id="prompt"
+      placeholder="Describe your image..."
+      required
+      spellcheck="false"
+      aria-label="Image description"
+    />
+    <label for="numImagesSelect">Number of images:</label>
+    <select id="numImagesSelect" name="numImages" aria-label="Number of images to generate">
+      <option value="1" selected>1 Image</option>
+      <option value="2">2 Images</option>
+      <option value="3">3 Images</option>
+      <option value="4">4 Images</option>
+    </select>
+    <button type="submit" aria-label="Generate images">Generate</button>
+  </form>
+
+  <div id="result" aria-live="polite" aria-busy="false"></div>
+
+<script>
+  const form = document.getElementById("imageForm");
+  const result = document.getElementById("result");
+  const numImagesSelect = document.getElementById("numImagesSelect");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const prompt = document.getElementById("prompt").value.trim();
+    if (!prompt) return;
+
+    const numImages = Number(numImagesSelect.value);
+
+    if (numImages === 4) {
+      result.classList.add("four");
+      result.classList.remove("not-four");
+    } else {
+      result.classList.remove("four");
+      result.classList.add("not-four");
+    }
+
+    result.setAttribute("aria-busy", "true");
+    result.innerHTML = '<div class="loader" aria-label="Loading..."></div>';
+
+    try {
+      const promises = [];
+      for (let i = 0; i < numImages; i++) {
+        promises.push(
+          fetch("https://clipdrop-api.co/text-to-image/v1", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": "b86bc44d69d6a9d34eca620fb079f1ef075d51189e232e71a2d023cd7ee1ca0c57e116612dfaf473ee05796e010a4bcc",
+            },
+            body: JSON.stringify({ prompt: prompt }),
+          }).then(async (res) => {
+            if (!res.ok) {
+              const errorText = await res.text();
+              throw new Error("API Error: " + errorText);
+            }
+            return res.blob();
+          })
+        );
+      }
+
+      const blobs = await Promise.all(promises);
+
+      result.setAttribute("aria-busy", "false");
+      result.innerHTML = "";
+      blobs.forEach((blob, index) => {
+        const imgURL = URL.createObjectURL(blob);
+        const img = document.createElement("img");
+        img.src = imgURL;
+        img.alt = `Generated image ${index + 1} of '${prompt}'`;
+        img.loading = "lazy";
+        result.appendChild(img);
+      });
+    } catch (err) {
+      result.setAttribute("aria-busy", "false");
+      console.error(err);
+      result.innerHTML = `<div class="error">❌ ${err.message}</div>`;
+    }
+  });
+</script>
+</body>
+</html>

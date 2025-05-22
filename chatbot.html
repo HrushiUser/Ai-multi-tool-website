@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Chatbot</title>
+  <style>
+    body {
+      background: #000;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+    }
+    .chatbot {
+      width: 500px;
+      height: 700px;
+      background: #111;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #333;
+    }
+    .header {
+      background: #222;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #444;
+      font-weight: bold;
+    }
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 80%;
+      padding: 10px 15px;
+      border-radius: 12px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user {
+      align-self: flex-end;
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    .bot {
+      align-self: flex-start;
+      background: #111;
+      color: #fff;
+      border: 1px solid #333;
+    }
+    .input-area {
+      display: flex;
+      padding: 15px;
+      border-top: 1px solid #333;
+    }
+    input {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 20px;
+      background: #111;
+      color: #fff;
+      border: 1px solid #333;
+    }
+    button {
+      background: #0066ff;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 0 20px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .typing {
+      display: flex;
+      gap: 5px;
+      padding: 10px 15px;
+      background: #111;
+      border-radius: 20px;
+      align-self: flex-start;
+      border: 1px solid #333;
+    }
+    .typing div {
+      width: 8px;
+      height: 8px;
+      background: #555;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+    .typing div:nth-child(2) { animation-delay: 0.2s; }
+    .typing div:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="chatbot">
+    <div class="header">AI Chatbot</div>
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <input id="input" placeholder="Type your message..." />
+      <button id="send">Send</button>
+    </div>
+  </div>
+  <script>
+    const API_KEY = "Your API_KEY";
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const systemMessage = {
+      role: "system",
+      content: "You are a helpful AI assistant. Provide concise, relevant answers to user questions."
+    };
+    document.getElementById('send').addEventListener('click', sendMessage);
+    inputEl.addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
+    function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      addMessage(text, 'user');
+      inputEl.value = '';
+      const typing = document.createElement('div');
+      typing.className = 'typing';
+      typing.innerHTML = '<div></div><div></div><div></div>';
+      messagesEl.appendChild(typing);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      const chatElements = Array.from(messagesEl.querySelectorAll('.message'));
+      const chatHistory = chatElements.map(el => ({
+        role: el.classList.contains('user') ? 'user' : 'assistant',
+        content: el.querySelector('span')?.textContent.trim() || ''
+      }));
+      fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${API_KEY}`,
+          "HTTP-Referer": window.location.href,
+          "X-Title": "AI Chatbot",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "deepseek/deepseek-chat:free",
+          messages: [systemMessage, ...chatHistory],
+          temperature: 0.7
+        })
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        messagesEl.removeChild(typing);
+        const content = data.choices?.[0]?.message?.content || "I didn't understand that.";
+        addMessage(content, 'bot');
+      })
+      .catch(() => {
+        messagesEl.removeChild(typing);
+        addMessage("Sorry, I'm having trouble responding.", 'bot');
+      });
+    }
+    function addMessage(text, type) {
+      const msg = document.createElement('div');
+      msg.className = `message ${type}`;
+      const avatarUrl = type === 'user' ? '../user.png' : '../bot.png';
+      msg.innerHTML = `<div class="avatar" style="background-image: url('${avatarUrl}');"></div><span>${text}</span>`;
+      messagesEl.appendChild(msg);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+  </script>
+</body>
+</html>

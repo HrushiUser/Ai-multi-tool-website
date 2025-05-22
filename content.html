@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Content Generator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      font-family: Arial, sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      padding-top: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      color: white;
+    }
+
+    form {
+      width: 100%;
+      max-width: 600px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 30px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #000;
+      color: white;
+    }
+
+    button {
+      padding: 12px;
+      font-size: 1.1rem;
+      background: #1e90ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 200px;
+      align-self: center;
+    }
+    button:hover {
+      background: #187bcd;
+    }
+
+    .output {
+      margin-top: 30px;
+      max-width: 600px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      font-size: 1.1rem;
+      color: white;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>✍️ Content Generator</h1>
+
+  <form id="generator-form">
+    <input type="text" id="topic" placeholder="Enter a topic"/>
+    <select id="type">
+      <option value="article">Article</option>
+      <option value="blog">Blog Post</option>
+      <option value="email">Email</option>
+      <option value="product-desc">Product Description</option>
+      <option value="story">Short Story</option>
+      <option value="social">Social Media Caption</option>
+      <option value="poem">Poem</option>
+      <option value="headline">News Headline</option>
+      <option value="script">YouTube Script</option>
+    </select>
+    <button type="submit">Generate</button>
+  </form>
+
+  <div class="output" id="contentOutput">
+    <!-- Generated content will appear here -->
+  </div>
+
+  <script>
+    document.getElementById("generator-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const topic = document.getElementById("topic").value.trim();
+      const type  = document.getElementById("type").value;
+      const out   = document.getElementById("contentOutput");
+
+      if (!topic) {
+        out.innerText = "⚠️ Please enter a topic first.";
+        return;
+      }
+      out.innerText = "⏳ Generating content…";
+
+      // Build a simple prompt for Pollinations AI
+      const prompt = `Generate a ${type} about ${topic}`;
+
+      try {
+        // Pollinations AI public endpoint (CORS‐enabled, no key needed)
+        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
+        const text = await res.text();
+
+        // Pollinations may include HTML entities—decode if necessary
+        out.innerText = text.trim() || "✅ Done, but response was empty.";
+      } catch(err) {
+        console.error(err);
+        out.innerText = `❌ Error: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
