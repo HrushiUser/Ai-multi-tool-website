@@ -80,9 +80,7 @@
 </head>
 <body>
   <h1>🌐 AI Translator</h1>
-  
   <textarea id="inputText" placeholder="Type text to translate..."></textarea>
-  
   <div class="controls">
     <select id="sourceLang">
       <option value="hi">Hindi</option>
@@ -113,26 +111,20 @@
       <option value="pa">Punjabi</option>
       <option value="as">Assamese</option>
     </select>
-
     <button id="translateBtn">Translate</button>
   </div>
-
   <div class="output" id="translatedText">Translation will appear here...</div>
-
   <script>
     document.getElementById('translateBtn').addEventListener('click', () => {
       const text = document.getElementById('inputText').value.trim();
       const source = document.getElementById('sourceLang').value;
       const target = document.getElementById('targetLang').value;
       const output = document.getElementById('translatedText');
-
       if (!text) {
         output.textContent = "Please enter text to translate.";
         return;
       }
-
       output.textContent = "Translating...";
-
       fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`, {
         method: 'GET'
       })
