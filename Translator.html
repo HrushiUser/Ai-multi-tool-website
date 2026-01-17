@@ -129,7 +129,7 @@
       })
       .then(response => response.json())
       .then(data => {
-        console.log("API Response:", data); // Debugging: Check response in DevTools Console
+        console.log("API Response:", data); 
         if (data.responseData && data.responseData.translatedText) {
           output.textContent = data.responseData.translatedText;
         } else {
@@ -144,3 +144,4 @@
   </script>
 </body>
 </html>
+
