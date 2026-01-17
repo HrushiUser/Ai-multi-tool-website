@@ -1,0 +1,4 @@
+This file is intentionally kept as a placeholder.
+
+Purpose:
+- To retain the directory structure in version control
